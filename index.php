@@ -58,10 +58,21 @@
     $start = max(0, $start);
     // 最小単位0 → 1件目からデータを取得する (1ページ目のデータ)
 
-    $sql = sprintf('SELECT m.nick_name, m.picture_path, t.* FROM members m, tweets t WHERE m.member_id=t.member_id ORDER BY t.created DESC LIMIT %d, 5',
-          $start
-      );
-    // LIMIT 何件目からか, 何件取得するか
+    // $_REQUEST['search_word']が鍵になる
+    // sprintf()とLIKE句を併用しようとすると、一つ問題があるのでググること
+    //// sprintf('SELECT ~~~~~ LIKE "%%%s%%"',"ほげ");
+    if (!empty($_REQUEST['search_word'])) {
+        $sql = sprintf('SELECT m.nick_name, m.picture_path, t.* FROM members m, tweets t WHERE m.member_id=t.member_id AND t.tweet LIKE "%%%s%%" ORDER BY t.created DESC LIMIT %d, 5',
+              $_REQUEST['search_word'],
+              $start
+          );
+        // LIMIT 何件目からか, 何件取得するか
+    } else {
+        $sql = sprintf('SELECT m.nick_name, m.picture_path, t.* FROM members m, tweets t WHERE m.member_id=t.member_id ORDER BY t.created DESC LIMIT %d, 5',
+              $start
+          );
+    }
+
 
     $posts = mysqli_query($db, $sql) or die(mysqli_error($db));
 
@@ -154,7 +165,15 @@
         <!-- 検索窓設置 -->
         <form method="get" action="" class="form-horizontal" role="form">
           <?php // URLにパラメータとしてsearch_wordをURLに渡す ?>
-          <input type="text" name="search_word" value="">&nbsp;&nbsp;
+
+          <?php
+            // 検索ボタンが押されてパラメータのsearch_wordが空でないとき
+            if(!empty($_REQUEST['search_word'])):
+          ?>
+            <input type="text" name="search_word" value="<?php echo $_REQUEST['search_word']; ?>">&nbsp;&nbsp;
+          <?php else: ?>
+            <input type="text" name="search_word" value="">&nbsp;&nbsp;
+          <?php endif; ?>
 
           <input type="submit" class="btn btn-success btn-xs" value="検索">
         </form>
